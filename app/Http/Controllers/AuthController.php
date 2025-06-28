@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -29,6 +30,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'role' => ['required', Rule::in(['mahasiswa', 'dosen'])], // <-- Tambahkan validasi untuk role
         ]);
 
         // 2. Buat user baru dan hash passwordnya
@@ -36,6 +38,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password), // WAJIB: Selalu hash password!
+            'role' => $request->role, // <-- Tambahkan role
         ]);
 
         // 3. Login user yang baru dibuat
@@ -43,6 +46,7 @@ class AuthController extends Controller
 
         // 4. Redirect ke halaman dashboard
         return redirect('/dashboard');
+        return redirect('/login')->with('success', 'Registration successful! Please login.');
     }
 
 

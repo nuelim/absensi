@@ -20,6 +20,13 @@
                             <input type="email" name="email" id="email" class="form-control" required>
                         </div>
                         <div class="mb-3">
+        <label for="role" class="form-label">Daftar sebagai</label>
+        <select class="form-select" name="role" id="role" required>
+            <option value="mahasiswa" selected>Mahasiswa</option>
+            <option value="dosen">Dosen / Admin</option>
+        </select>
+    </div>
+                        <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <input type="password" name="password" id="password" class="form-control" required>
                         </div>

@@ -5,6 +5,8 @@ use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\MataKuliahController;
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\LoginController;
+use App\Http\Controllers\Admin\UserController;
 
 // Halaman utama
 Route::get('/', function () {
@@ -48,3 +50,20 @@ Route::middleware('auth')->group(function () {
     // Route::resource('mahasiswa', MahasiswaController::class);
     // ... dan seterusnya ...
 });
+
+Route::get('/admin/login', [LoginController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [LoginController::class, 'login']);
+
+// Grup rute yang hanya bisa diakses oleh admin yang sudah login
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    // Dashboard atau halaman utama admin bisa diletakkan di sini
+    Route::get('/dashboard', function () {
+        // Arahkan saja ke halaman manajemen user sebagai default
+        return redirect('/admin/users');
+    })->name('admin.dashboard');
+
+    // Rute untuk manajemen user
+    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::put('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('admin.users.updateRole');
+});
+
