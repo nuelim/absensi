@@ -6,6 +6,7 @@
     {{-- Memuat script face-api.js. 'defer' berarti script akan dijalankan setelah HTML selesai dimuat --}}
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const videoElement = document.getElementById('webcam');
@@ -60,7 +61,7 @@
                         const descriptor = detection.descriptor;
                         
                         // Kirim descriptor ke backend Laravel
-                        fetch("{{ route('mahasiswa.simpan-wajah', $mahasiswa->id) }}", {
+                        fetch("{{ route('mahasiswa.simpan-wajah', $user->id) }}", {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -106,7 +107,7 @@
 </style>
 
 <div class="container text-center">
-    <h2>Daftarkan Wajah untuk: {{ $mahasiswa->nama }}</h2>
+    <h2>Daftarkan Wajah untuk: {{ $user->nama }}</h2>
     <p>Posisikan wajah Anda di depan kamera lalu klik tombol di bawah.</p>
     
     <div id="webcam-container" class="mb-3">

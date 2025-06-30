@@ -15,15 +15,15 @@ class Absensi extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'mahasiswa_id',
+        'user_id',
         'mata_kuliah_id',
         'tanggal_absensi',
         'status',
     ];
 
-    public function mahasiswa()
+    public function user()
     {
-        return $this->belongsTo(Mahasiswa::class);
+        return $this->belongsTo(User::class);
     }
 
     public function mataKuliah()

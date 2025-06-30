@@ -94,7 +94,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($semuaMahasiswa as $mhs)
+                        @foreach($mahasiswas as $mhs)
                         <tr id="row-mhs-{{ $mhs->id }}">
                             <td>{{ $mhs->nama }}</td>
                             <td class="text-center">
@@ -122,7 +122,7 @@
             const videoElement = document.getElementById('webcam');
             const webcamContainer = document.getElementById('webcam-container');
             const statusPesan = document.getElementById('status-pesan');
-            const mahasiswaTerdaftar = @json($mahasiswaTerdaftar);
+            const mahasiswaTerdaftar = @json($mahasiswas);
             const MODEL_URL = '{{ asset('weights') }}';
             
             let faceMatcher;

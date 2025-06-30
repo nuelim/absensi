@@ -11,21 +11,23 @@
                 <div class="card-body">
                     <form method="POST" action="/register">
                         @csrf
+                        <div>
+                        <label for="nim" class="form-label">NIM</label>
+                        <input type="text" name="nim" id="nim" class="form-control" required="">
+                         @error('nim')
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
                         <div class="mb-3">
                             <label for="name" class="form-label">Nama</label>
                             <input type="text" name="name" id="name" class="form-control" required>
                         </div>
+                        
                         <div class="mb-3">
                             <label for="email" class="form-label">Alamat Email</label>
                             <input type="email" name="email" id="email" class="form-control" required>
                         </div>
-                        <div class="mb-3">
-        <label for="role" class="form-label">Daftar sebagai</label>
-        <select class="form-select" name="role" id="role" required>
-            <option value="mahasiswa" selected>Mahasiswa</option>
-            <option value="dosen">Dosen / Admin</option>
-        </select>
-    </div>
+                        
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <input type="password" name="password" id="password" class="form-control" required>

@@ -18,7 +18,7 @@
     <form action="{{ route('mahasiswa.store') }}" method="POST">
         @csrf
         <div class="mb-3">
-            <label for="nim" class="form-label">NIM</label>
+            <label for="nim" class="form-label">NIMM</label>
             <input type="text" class="form-control" id="nim" name="nim">
         </div>
         <div class="mb-3">

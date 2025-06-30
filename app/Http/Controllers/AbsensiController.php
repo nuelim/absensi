@@ -8,91 +8,68 @@ use App\Models\Absensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; // <-- PASTIKAN USE INI ADA
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class AbsensiController extends Controller
 {
     public function create()
     {
-        // Mengambil SEMUA mahasiswa untuk ditampilkan di tabel form
-        $semuaMahasiswa = Mahasiswa::orderBy('nama', 'asc')->get();
-
-        // Mengambil data mahasiswa yang SUDAH mendaftarkan wajah saja
-        // Kita hanya butuh id, nama, dan descriptornya untuk JavaScript
-        $mahasiswaTerdaftar = Mahasiswa::whereNotNull('face_descriptor')
-            ->get(['id', 'nama', 'face_descriptor']);
-
         $mataKuliahs = MataKuliah::all();
+        
+        // Ambil semua user dengan role mahasiswa yang sudah mendaftarkan wajah
+        $mahasiswas = User::where('role', 'mahasiswa')->whereNotNull('face_descriptor')->get();
 
-        // Kirim semua data yang dibutuhkan ke view
-        return view('absensi.create', compact('semuaMahasiswa', 'mataKuliahs', 'mahasiswaTerdaftar'));
+        return view('absensi.create', compact('mataKuliahs', 'mahasiswas'));
     }
+
 
     public function store(Request $request)
     {
         $request->validate([
-            'mata_kuliah_id' => 'required',
-            'tanggal_absensi' => 'required|date',
-            'absensi' => 'required|array'
+            // Ubah validasi ke tabel users
+            'mahasiswa_id' => 'required|exists:users,id', 
+            'mata_kuliah_id' => 'required|exists:mata_kuliahs,id',
         ]);
 
-        foreach ($request->absensi as $mahasiswa_id => $status) {
-            Absensi::create([
-                'mahasiswa_id' => $mahasiswa_id,
-                'mata_kuliah_id' => $request->mata_kuliah_id,
-                'tanggal_absensi' => $request->tanggal_absensi,
-                'status' => $status
-            ]);
+        // Cek apakah mahasiswa sudah absen hari ini untuk matkul yang sama
+        $alreadyExists = Absensi::where('user_id', $request->mahasiswa_id)
+            ->where('mata_kuliah_id', $request->mata_kuliah_id)
+            ->whereDate('created_at', today())
+            ->exists();
+
+        if ($alreadyExists) {
+            return response()->json(['status' => 'already_exists']);
         }
 
-        return redirect()->route('absensi.index')->with('success', 'Absensi berhasil disimpan.');
+        // Simpan absensi dengan user_id
+        Absensi::create([
+            'user_id' => $request->mahasiswa_id,
+            'mata_kuliah_id' => $request->mata_kuliah_id,
+        ]);
+
+        return response()->json(['status' => 'success']);
     }
 
     public function index(Request $request)
     {
-        // Ambil user yang sedang login
-        $user = Auth::user(); 
+        $user = Auth::user();
+        $query = Absensi::with(['user', 'mataKuliah']);
 
-        // Mulai query dasar
-        $query = Absensi::with(['mahasiswa', 'mataKuliah']);
-
-        // Periksa apakah ada input tanggal di request
+        // Filter berdasarkan tanggal jika ada
         if ($request->filled('tanggal')) {
-            $query->whereDate('tanggal_absensi', $request->tanggal);
+            $query->whereDate('created_at', $request->tanggal);
         }
-        
-        // =============================================
-        // TAMBAHKAN BLOK LOGIKA PERAN PENGGUNA DI SINI
-        // =============================================
+
+        // Jika user adalah mahasiswa, hanya tampilkan absensinya sendiri
         if ($user->role == 'mahasiswa') {
-            // Jika user adalah mahasiswa, filter berdasarkan namanya
-            $mahasiswa = Mahasiswa::where('nama', $user->name)->first();
-
-            if ($mahasiswa) {
-                // Tambahkan kondisi where untuk memfilter berdasarkan ID mahasiswa yang cocok
-                $query->where('mahasiswa_id', $mahasiswa->id);
-            } else {
-                // Jika tidak ada mahasiswa yang cocok dengan nama user,
-                // pastikan query tidak mengembalikan hasil apa pun.
-                $query->where('mahasiswa_id', -1); 
-            }
+            $query->where('user_id', $user->id);
         }
-        // Jika user adalah 'dosen', tidak ada filter tambahan yang diterapkan,
-        // sehingga semua data akan ditampilkan.
-        // =============================================
-        // AKHIR BLOK LOGIKA
-        // =============================================
 
+        $absensis = $query->latest()->get();
 
-        // Eksekusi query setelah semua kondisi ditambahkan
-        $absensi = $query->latest()->paginate(10)->appends($request->query());
-
-        // Kirim data ke view
-        return view('absensi.index', compact('absensi'));
+        return view('absensi.index', compact('absensis'));
     }
-    // ==========================================================
-    // AKHIR DARI METHOD INDEX YANG DIUBAH
-    // ==========================================================
-    
+
 
     public function absenOtomatis(Request $request)
     {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
 use App\Models\Mahasiswa;
 
 class MahasiswaController extends Controller
@@ -14,12 +15,14 @@ class MahasiswaController extends Controller
     // KODE BARU YANG BENAR
     public function index()
     {
-        // Mengambil data dengan paginasi, 10 data per halaman, diurutkan dari yang terbaru
-        $mahasiswas = Mahasiswa::latest()->paginate(10);
-
-        // Mengirim data ke view dalam bentuk Paginator
+        // Tetap seperti sebelumnya, mengambil user dengan role mahasiswa
+        $mahasiswas = User::where('role', 'mahasiswa')->latest()->get();
         return view('mahasiswa.index', compact('mahasiswas'));
     }
+    /**
+     * Show the form for editing the specified resource.
+     * Parameter $mahasiswa sekarang adalah instance dari User karena Route-Model Binding.
+     */
 
     /**
      * Show the form for creating a new resource.
@@ -57,35 +60,28 @@ class MahasiswaController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(User $mahasiswa)
     {
-        $mahasiswa = Mahasiswa::findOrFail($id);
-
-        // Tampilkan view edit dan kirim data mahasiswa yang ditemukan
-        return view('mahasiswa.edit', compact('mahasiswa'));
+        // Kirim data user ke view edit
+        return view('mahasiswa.edit', ['user' => $mahasiswa]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $mahasiswa)
     {
         $request->validate([
-            // Aturan 'unique' di sini sedikit berbeda
-            // Kita memberitahu Laravel untuk mengabaikan NIM mahasiswa saat ini (dengan ID $id)
-            // saat memeriksa keunikan data.
-            'nim' => 'required|max:10|unique:mahasiswas,nim,' . $id,
-            'nama' => 'required|max:255',
-            'jurusan' => 'required',
+            // Pastikan NIM unik kecuali untuk user ini sendiri
+            'nim' => 'required|unique:users,nim,' . $mahasiswa->id,
+            'name' => 'required',
         ]);
 
-        // Cari mahasiswa yang akan diupdate
-        $mahasiswa = Mahasiswa::findOrFail($id);
+        $mahasiswa->update([
+            'nim' => $request->nim,
+            'name' => $request->name,
+        ]);
 
-        // Update data di database
-        $mahasiswa->update($request->all());
-
-        // Redirect kembali ke halaman index dengan pesan sukses
         return redirect()->route('mahasiswa.index')
             ->with('success', 'Data mahasiswa berhasil diperbarui.');
     }
@@ -93,42 +89,42 @@ class MahasiswaController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(User $mahasiswa)
     {
-        $mahasiswa = Mahasiswa::findOrFail($id);
-
-        // Hapus data
         $mahasiswa->delete();
 
-        // Redirect kembali ke halaman index dengan pesan sukses
         return redirect()->route('mahasiswa.index')
             ->with('success', 'Data mahasiswa berhasil dihapus.');
     }
 
     // Tambahkan 2 method ini di dalam class MahasiswaController
 
-    public function showDaftarkanWajah(Mahasiswa $mahasiswa)
+    public function showDaftarkanWajah($id)
     {
-        // Cukup tampilkan view dengan data mahasiswa yang bersangkutan
-        return view('mahasiswa.daftarkan-wajah', compact('mahasiswa'));
+        $user = User::findOrFail($id);
+        return view('mahasiswa.daftarkan-wajah', compact('user'));
     }
+    /**
+     * Menyimpan face descriptor ke user yang sesuai.
+     */
 
-    public function simpanWajah(Request $request, Mahasiswa $mahasiswa)
+    public function simpanWajah(Request $request, $id)
     {
-        // Validasi untuk memastikan descriptor tidak kosong
         $request->validate([
-            'face_descriptor' => 'required'
+            'face_descriptor' => 'required',
         ]);
 
-        // Update kolom face_descriptor pada mahasiswa yang bersangkutan
-        $mahasiswa->update([
-            'face_descriptor' => $request->face_descriptor
-        ]);
+        $user = User::findOrFail($id);
+        $user->face_descriptor = json_encode($request->input('face_descriptor'));
+        $user->save();
 
-        // Jangan lupa tambahkan 'face_descriptor' ke $fillable di Model Mahasiswa
-        // protected $fillable = ['nim', 'nama', 'jurusan', 'face_descriptor'];
-
-        // Kirim respons JSON kembali ke JavaScript
-        return response()->json(['success' => true, 'message' => 'Wajah berhasil didaftarkan!']);
+        return response()->json([
+        'success' => true,
+        'message' => 'Wajah berhasil didaftarkan.'
+    ]);
     }
+    
+    // Metode 'create' dan 'store' tidak lagi relevan karena mahasiswa
+    // dibuat melalui halaman registrasi. Anda bisa menghapusnya jika mau.
+    // Metode 'show' juga bisa dihapus jika tidak digunakan.
 }

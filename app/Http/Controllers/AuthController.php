@@ -28,17 +28,20 @@ class AuthController extends Controller
         // 1. Validasi input
         $request->validate([
             'name' => 'required|string|max:255',
+            'nim' => 'required|string|max:255|unique:users,nim', // Tambahkan validasi untuk nim
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in(['mahasiswa', 'dosen'])], // <-- Tambahkan validasi untuk role
+            //'role' => ['required', Rule::in(['mahasiswa', 'dosen'])], // <-- Tambahkan validasi untuk role
         ]);
 
         // 2. Buat user baru dan hash passwordnya
         $user = User::create([
             'name' => $request->name,
+            'nim' => $request->nim, // Tambahkan nim saat membuat user
             'email' => $request->email,
+            'role' => 'mahasiswa', // Atur role menjadi 'mahasiswa' secara default
             'password' => Hash::make($request->password), // WAJIB: Selalu hash password!
-            'role' => $request->role, // <-- Tambahkan role
+
         ]);
 
         // 3. Login user yang baru dibuat
