@@ -6,6 +6,8 @@ use App\Models\Mahasiswa;
 use App\Models\MataKuliah;
 use App\Models\Absensi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- PASTIKAN USE INI ADA
+use Illuminate\Support\Facades\DB;
 
 class AbsensiController extends Controller
 {
@@ -47,23 +49,50 @@ class AbsensiController extends Controller
 
     public function index(Request $request)
     {
-        // Mulai query dasar. Kita tidak langsung ->get() atau ->paginate()
-        // agar bisa menambahkan kondisi lain.
+        // Ambil user yang sedang login
+        $user = Auth::user(); 
+
+        // Mulai query dasar
         $query = Absensi::with(['mahasiswa', 'mataKuliah']);
 
         // Periksa apakah ada input tanggal di request
         if ($request->filled('tanggal')) {
-            // Jika ada, tambahkan kondisi 'where' untuk memfilter berdasarkan tanggal
             $query->whereDate('tanggal_absensi', $request->tanggal);
         }
+        
+        // =============================================
+        // TAMBAHKAN BLOK LOGIKA PERAN PENGGUNA DI SINI
+        // =============================================
+        if ($user->role == 'mahasiswa') {
+            // Jika user adalah mahasiswa, filter berdasarkan namanya
+            $mahasiswa = Mahasiswa::where('nama', $user->name)->first();
 
-        // Setelah semua kondisi ditambahkan, baru kita eksekusi query
-        // dan urutkan berdasarkan yang terbaru, lalu paginasi.
-        $absensi = $query->latest()->paginate(10)->appends(request()->query()); // <-- BARIS YANG DIUBAH
+            if ($mahasiswa) {
+                // Tambahkan kondisi where untuk memfilter berdasarkan ID mahasiswa yang cocok
+                $query->where('mahasiswa_id', $mahasiswa->id);
+            } else {
+                // Jika tidak ada mahasiswa yang cocok dengan nama user,
+                // pastikan query tidak mengembalikan hasil apa pun.
+                $query->where('mahasiswa_id', -1); 
+            }
+        }
+        // Jika user adalah 'dosen', tidak ada filter tambahan yang diterapkan,
+        // sehingga semua data akan ditampilkan.
+        // =============================================
+        // AKHIR BLOK LOGIKA
+        // =============================================
+
+
+        // Eksekusi query setelah semua kondisi ditambahkan
+        $absensi = $query->latest()->paginate(10)->appends($request->query());
 
         // Kirim data ke view
         return view('absensi.index', compact('absensi'));
     }
+    // ==========================================================
+    // AKHIR DARI METHOD INDEX YANG DIUBAH
+    // ==========================================================
+    
 
     public function absenOtomatis(Request $request)
     {

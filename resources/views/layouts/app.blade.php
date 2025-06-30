@@ -26,9 +26,10 @@
 
         .sidebar {
             width: 260px;
-            background-color: #0d6efd;
+            background-color: #1a4e9cd7;
             color: white;
             min-height: 100vh;
+            transition: width 0.3s;
         }
 
         .sidebar .nav-link {
@@ -38,7 +39,7 @@
 
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
-            background-color: #0b5ed7;
+            background-color: #123a75; /* Sedikit lebih gelap saat di-hover atau aktif */
         }
 
         .sidebar .brand {
@@ -68,15 +69,20 @@
             object-fit: cover;
             margin-right: 8px;
         }
+
+        .custom-header {
+            background-color: #1a4e9cd7;
+        }
+
     </style>
 </head>
 <body>
     {{-- Header --}}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark custom-header shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="/dashboard">
                 <img src="{{ asset('images/logo.jpg') }}" alt="Logo" style="height: 35px; margin-right: 10px;">
-                Sistem Absensi
+                Havetra
             </a>
             <div class="d-flex ms-auto">
                 @auth
@@ -101,35 +107,54 @@
         </div>
     </nav>
 
-    <div class="wrapper">
-        {{-- Sidebar --}}
-        <div class="sidebar d-flex flex-column">
+    {{-- ... kode sebelum sidebar ... --}}
+
+<div class="wrapper">
+    {{-- Sidebar --}}
+    <div class="sidebar d-flex flex-column">
+        
+        @auth
+        <nav class="nav flex-column mt-3">
             
-            @auth
-            <nav class="nav flex-column">
-                <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" href="/dashboard">
-                    <i class="fa fa-home me-2"></i>Dashboard
-                </a>
-                <a class="nav-link {{ request()->is('mahasiswa*') ? 'active' : '' }}" href="{{ route('mahasiswa.index') }}">
-                    <i class="fa fa-users me-2"></i>Data Mahasiswa
-                </a>
-                <a class="nav-link {{ request()->is('matakuliah*') ? 'active' : '' }}" href="{{ route('matakuliah.index') }}">
-                    <i class="fa fa-book me-2"></i>Data Mata Kuliah
-                </a>
-                <a class="nav-link {{ request()->is('absensi/create') ? 'active' : '' }}" href="{{ route('absensi.create') }}">
-                    <i class="fa fa-calendar-check me-2"></i>Ambil Absen
-                </a>
-                <a class="nav-link {{ request()->is('absensi') ? 'active' : '' }}" href="{{ route('absensi.index') }}">
-                    <i class="fa fa-file-alt me-2"></i>Laporan Absensi
-                </a>
-            </nav>
-            @endauth
-        </div>
+            {{-- MENU UNTUK SEMUA PENGGUNA YANG LOGIN --}}
+            <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" href="/dashboard">
+                <i class="fa fa-home fa-fw me-2"></i>Dashboard
+            </a>
+
+            {{-- ============================================= --}}
+            {{-- MENU KHUSUS UNTUK DOSEN --}}
+            {{-- ============================================= --}}
+            @if (Auth::user()->role == 'dosen')
+            <a class="nav-link {{ request()->is('mahasiswa*') ? 'active' : '' }}" href="{{ route('mahasiswa.index') }}">
+                <i class="fa fa-users fa-fw me-2"></i>Data Mahasiswa
+            </a>
+            <a class="nav-link {{ request()->is('matakuliah*') ? 'active' : '' }}" href="{{ route('matakuliah.index') }}">
+                <i class="fa fa-book fa-fw me-2"></i>Data Mata Kuliah
+            </a>
+            @endif
+            {{-- ============================================= --}}
+            {{-- AKHIR DARI MENU KHUSUS DOSEN --}}
+            {{-- ============================================= --}}
+
+            {{-- PINDAHKAN MENU AMBIL ABSEN KE SINI --}}
+            <a class="nav-link {{ request()->is('absensi/create') ? 'active' : '' }}" href="{{ route('absensi.create') }}">
+                <i class="fa fa-calendar-check fa-fw me-2"></i>Ambil Absen
+            </a>
+
+            {{-- MENU UNTUK SEMUA PENGGUNA YANG LOGIN --}}
+            <a class="nav-link {{ request()->is('absensi') || request()->is('absensi/index') ? 'active' : '' }}" href="{{ route('absensi.index') }}">
+                <i class="fa fa-file-alt fa-fw me-2"></i>Laporan Absensi
+            </a>
+        </nav>
+        @endauth
+    </div>
+
+    {{-- ... sisa kode ... --}}
 
         {{-- Main Content --}}
-        <div class="main-content">
+        <main class="main-content">
             @yield('content')
-        </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
